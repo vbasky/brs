@@ -49,6 +49,7 @@ export const defaultExecutionOptions: ExecutionOptions = {
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private _environment = new Environment();
 
+    readonly options: ExecutionOptions;
     readonly stdout: OutputProxy;
     readonly stderr: OutputProxy;
     readonly temporaryVolume: MemoryFileSystem = new MemoryFileSystem();
@@ -59,11 +60,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Creates a new Interpreter, including any global properties and functions.
-     * @param outputStreams the WriteStreams to use for `stdout` and `stderr`.
+     * @param options configuration for the execution, including the streams to use for `stdout` and
+     *                `stderr` and the base directory for path resolution
      */
-    constructor(outputStreams: ExecutionOptions = defaultExecutionOptions) {
-        this.stdout = new OutputProxy(outputStreams.stdout);
-        this.stderr = new OutputProxy(outputStreams.stderr);
+    constructor(options: ExecutionOptions = defaultExecutionOptions) {
+        this.stdout = new OutputProxy(options.stdout);
+        this.stderr = new OutputProxy(options.stderr);
+        this.options = options;
 
         Object.keys(StdLib)
             .map(name => (StdLib as any)[name])
@@ -107,7 +110,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         try {
             let maybeMain = this._environment.get({ kind: Lexeme.Identifier, text: "main", line: -1, isReserved: false });
             if (maybeMain.kind === ValueKind.Callable) {
-                results = [ maybeMain.call(this) ];
+                results = [
+                    this.visitCall(
+                        new Expr.Call(
+                            new Expr.Literal(maybeMain),
+                            { kind: Lexeme.RightParen, text: ")", line: -1, isReserved: false },
+                            []
+                        )
+                    )
+                ];
             }
         } catch (err) {
             throw err;
