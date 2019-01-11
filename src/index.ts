@@ -46,7 +46,6 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
         }
 
         let tokens = Lexer.scan(contents);
-        // TODO: Does this need to work across multiple files?
         let processedTokens = Preprocessor.preprocess(tokens, manifest);
         let statements = Parser.parse(processedTokens);
 
@@ -74,6 +73,25 @@ export async function execute(filenames: string[], options: Partial<ExecutionOpt
 
     // execute them
     return interpreter.exec(statements);
+}
+
+export function executeSync(filenames: string[], options: Partial<ExecutionOptions>) {
+    const executionOptions = Object.assign(defaultExecutionOptions, options);
+    const interpreter = new Interpreter(executionOptions); // shared between files
+
+    let manifest = Preprocessor.getManifestSync(executionOptions.root);
+
+    let allStatements = filenames.map(filename => {
+        let contents = fs.readFileSync(filename, "utf-8");
+        let tokens = Lexer.scan(contents);
+        let processedTokens = Preprocessor.preprocess(tokens, manifest);
+        return Parser.parse(processedTokens);
+    }).reduce(
+        (allStatements, statements) => [ ...allStatements, ...statements ],
+        []
+    );
+
+    return interpreter.exec(allStatements);
 }
 
 /**

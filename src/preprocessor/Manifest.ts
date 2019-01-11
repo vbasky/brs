@@ -26,8 +26,28 @@ export async function getManifest(rootDir: string): Promise<Manifest> {
     }
 
     let contents: string = await readFile(manifestPath, "utf-8");
+    try {
+        return Promise.resolve(
+            getManifestFromContents(contents)
+        );
+    } catch (err) {
+        return Promise.reject(err);
+    }
+}
 
-    let keyValuePairs = contents
+export function getManifestSync(rootDir: string): Manifest {
+    let manifestPath = path.join(rootDir, "manifest");
+
+    if (!fs.existsSync(manifestPath)) {
+        return new Map();
+    }
+
+    let contents = fs.readFileSync(manifestPath, "utf-8");
+    return getManifestFromContents(contents);
+}
+
+function getManifestFromContents(manifestContents: string): Manifest {
+    let keyValuePairs = manifestContents
         // for each line
         .split("\n")
         // remove leading/trailing whitespace
