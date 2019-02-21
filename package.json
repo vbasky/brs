@@ -1,6 +1,6 @@
 {
   "name": "brs",
-  "version": "0.13.0-nightly.20190221",
+  "version": "0.13.0-rc.2",
   "description": "An interpreter for the BrightScript language that runs on non-Roku platforms.",
   "author": "Sean Barag <sean@barag.org>",
   "license": "MIT",
@@ -17,9 +17,9 @@
     "prepublishOnly": "npm-run-all --serial clean build lint test"
   },
   "files": [
-    "./bin/",
-    "./lib/",
-    "./types/"
+    "bin/",
+    "lib/",
+    "types/"
   ],
   "dependencies": {
     "commander": "^2.12.2",
